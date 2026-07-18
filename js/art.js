@@ -171,41 +171,20 @@ const Art = (() => {
     const r = 15;
     ctx.save();
     ctx.translate(0, headY);
-    // face
+    // face — no helmet, always fully visible
     faceInCircle(ctx, knightFaceImg, knightFaceReady, 0, 0, r);
-    // helmet (armor only) — an open-face cap that frames the top of the head
-    // without covering eyes/nose/mouth, so the real photo stays recognizable.
+    // simple hair on top, same for armor and wedding looks
+    ctx.fillStyle = "#2b1c14";
+    ctx.beginPath();
+    ctx.arc(0, -r + 3, r - 1, Math.PI, Math.PI * 2);
+    ctx.fill();
     if (!wedding) {
-      ctx.fillStyle = "#aebbcf";
-      ctx.beginPath();
-      ctx.arc(0, 0, r + 3, Math.PI * 1.1, Math.PI * 1.9, false);
-      ctx.fill();
-      ctx.strokeStyle = "#5a6478"; ctx.lineWidth = 2; ctx.stroke();
-      // brim rim line at base of the cap
-      const rimY = (r + 3) * Math.sin(Math.PI * 1.9);
-      const rimX = (r + 3) * Math.cos(Math.PI * 1.9);
-      ctx.beginPath(); ctx.moveTo(-rimX, rimY); ctx.lineTo(rimX, rimY); ctx.stroke();
-      // thin nose guard, purely decorative
-      ctx.fillStyle = "#8493ab";
-      roundRect(ctx, -1.5, rimY, 3, 8, 1.5); ctx.fill();
-      // side cheek guards, hugging the far edges only
-      ctx.fillStyle = "#aebbcf";
-      ctx.beginPath(); ctx.moveTo(-r - 2, rimY); ctx.quadraticCurveTo(-r - 6, rimY + 10, -r + 1, rimY + 14); ctx.lineTo(-r + 4, rimY + 4); ctx.closePath(); ctx.fill();
-      ctx.strokeStyle = "#5a6478"; ctx.lineWidth = 1.5; ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(r + 2, rimY); ctx.quadraticCurveTo(r + 6, rimY + 10, r - 1, rimY + 14); ctx.lineTo(r - 4, rimY + 4); ctx.closePath(); ctx.fill();
-      ctx.stroke();
-      // plume
+      // small heroic feather, tucked beside the hair — doesn't touch the face
       ctx.fillStyle = "#c62b3a";
       ctx.beginPath();
-      ctx.moveTo(0, -r - 3);
-      ctx.quadraticCurveTo(10, -r - 18, 2, -r - 26);
-      ctx.quadraticCurveTo(-2, -r - 14, 0, -r - 3);
-      ctx.fill();
-    } else {
-      // dapper hair swoop, no helmet
-      ctx.fillStyle = "#2b1c14";
-      ctx.beginPath();
-      ctx.arc(0, -r + 2, r - 1, Math.PI, Math.PI * 2);
+      ctx.moveTo(r - 4, -r - 1);
+      ctx.quadraticCurveTo(r + 8, -r - 14, r + 2, -r - 22);
+      ctx.quadraticCurveTo(r - 2, -r - 10, r - 4, -r - 1);
       ctx.fill();
     }
     ctx.restore();
@@ -253,56 +232,38 @@ const Art = (() => {
     ctx.beginPath(); ctx.moveTo(-9, -60); ctx.lineTo(-16, -44 + Math.sin(t * 3) * 2); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(9, -60); ctx.lineTo(16, -44 - Math.sin(t * 3) * 2); ctx.stroke();
 
-    // head
+    // head — no drawn hair at all, the real photo already has her hair in it
     const r = 15;
     ctx.save();
     ctx.translate(0, -78);
-    // hair halo, drawn BEHIND the face so it only frames the edges
-    ctx.fillStyle = "#3b2418";
-    ctx.beginPath(); ctx.arc(0, 2, r + 5, 0, Math.PI * 2); ctx.fill();
-    // face on top — always fully visible (eyes/nose/mouth never covered)
     faceInCircle(ctx, princessFaceImg, princessFaceReady, 0, 0, r, "#f6cba0");
-    // hair fringe: a thin cap over the top of the forehead only
-    ctx.fillStyle = "#3b2418";
-    ctx.beginPath();
-    ctx.arc(0, 0, r + 2, Math.PI * 1.12, Math.PI * 1.88, false);
-    ctx.fill();
-    // side locks hanging past the chin, well below eye/nose/mouth level
-    ctx.beginPath();
-    ctx.moveTo(-r + 2, 6);
-    ctx.quadraticCurveTo(-r - 6, 18, -r + 3, 28);
-    ctx.quadraticCurveTo(-r + 6, 16, -r + 5, 6);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(r - 2, 6);
-    ctx.quadraticCurveTo(r + 6, 18, r - 3, 28);
-    ctx.quadraticCurveTo(r - 6, 16, r - 5, 6);
-    ctx.fill();
 
     if (wedding) {
-      // veil
+      // veil, well clear of the face
       ctx.fillStyle = "rgba(255,255,255,.55)";
       ctx.beginPath();
-      ctx.moveTo(-r, -8);
-      ctx.quadraticCurveTo(0, 30, r, -8);
-      ctx.quadraticCurveTo(0, 10, -r, -8);
+      ctx.moveTo(-r, -r - 2);
+      ctx.quadraticCurveTo(0, 26, r, -r - 2);
+      ctx.quadraticCurveTo(0, -r + 12, -r, -r - 2);
       ctx.fill();
     }
-    // tiara / crown
+    // tiara / crown — floats well above the head, never touching the face
+    const crownTopY = -r - 20;
+    const crownBaseY = -r - 8;
     ctx.fillStyle = "#ffd76a";
     ctx.beginPath();
-    ctx.moveTo(-11, -r + 3);
-    ctx.lineTo(-7, -r - 6);
-    ctx.lineTo(-2, -r + 1);
-    ctx.lineTo(0, -r - 9);
-    ctx.lineTo(2, -r + 1);
-    ctx.lineTo(7, -r - 6);
-    ctx.lineTo(11, -r + 3);
+    ctx.moveTo(-11, crownBaseY);
+    ctx.lineTo(-7, crownBaseY - 9);
+    ctx.lineTo(-2, crownBaseY - 2);
+    ctx.lineTo(0, crownTopY);
+    ctx.lineTo(2, crownBaseY - 2);
+    ctx.lineTo(7, crownBaseY - 9);
+    ctx.lineTo(11, crownBaseY);
     ctx.closePath();
     ctx.fill();
     ctx.strokeStyle = "#c9a13b"; ctx.lineWidth = 1.4; ctx.stroke();
     ctx.fillStyle = "#e0536b";
-    ctx.beginPath(); ctx.arc(0, -r - 4, 2, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(0, crownTopY + 5, 2, 0, 7); ctx.fill();
 
     ctx.restore();
     ctx.restore();

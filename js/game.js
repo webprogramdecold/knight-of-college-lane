@@ -369,7 +369,12 @@
       const moveX = Math.abs(joyX) > 0.18 ? joyX : 0;
       knight.x += moveX * MOVE_SPEED * dt;
       if (moveX !== 0) knight.facing = moveX > 0 ? 1 : -1;
-      knight.x = Math.max(4, Math.min(level.length + 40, knight.x));
+      const maxX = level.boss ? Math.max(level.length, level.boss.x + 120) + 40 : level.length + 40;
+      knight.x = Math.max(4, Math.min(maxX, knight.x));
+      // the boss has a solid body: don't let the knight walk straight through it and out of attack range
+      if (level.boss && level.bossFightActive && !level.boss.dead) {
+        knight.x = Math.min(knight.x, level.boss.x - 45);
+      }
 
       if (knight.hurtBump) { knight.x += knight.hurtBump * dt * 6; knight.hurtBump *= (1 - dt * 6); if (Math.abs(knight.hurtBump) < 1) knight.hurtBump = 0; }
 
@@ -498,7 +503,8 @@
     camX = Math.max(0, Math.min(knight.x - VW * 0.36, Math.max(0, rightBound - VW)));
 
     // level clear (non-boss levels)
-    if (!level.boss && knight.x >= level.gateX) {
+    if (!level.boss && !level.completing && knight.x >= level.gateX) {
+      level.completing = true;
       goToNextLevel();
     }
 
