@@ -600,27 +600,114 @@ const Art = (() => {
     parallaxHills(ctx, w, groundY, camX * 0.15, 80, 500);
     ctx.fillStyle = "#6b7c96";
     parallaxHills(ctx, w, groundY, camX * 0.3, 50, 340);
-    // canyon walls (visual only, ground handled per-segment by game as planks)
-    ctx.fillStyle = "rgba(60,50,60,.5)";
-    ctx.fillRect(0, groundY + 40, w, h - groundY - 40);
+
+    // deep gorge beneath the bridge deck, layered rock walls fading into mist
+    const gorgeTop = groundY + 30;
+    const gorgeGrad = ctx.createLinearGradient(0, gorgeTop, 0, h);
+    gorgeGrad.addColorStop(0, "#5b6478");
+    gorgeGrad.addColorStop(0.4, "#3a4356");
+    gorgeGrad.addColorStop(0.75, "#232a3a");
+    gorgeGrad.addColorStop(1, "#12151e");
+    ctx.fillStyle = gorgeGrad;
+    ctx.fillRect(0, gorgeTop, w, h - gorgeTop);
+
+    // jagged rock silhouettes climbing up from both sides of the gorge
+    ctx.fillStyle = "rgba(30,36,48,.85)";
+    jaggedRockEdge(ctx, w, gorgeTop, camX * 0.5, 46, 220, true);
+    jaggedRockEdge(ctx, w, gorgeTop, camX * 0.5 + 90, 46, 220, false);
+    ctx.fillStyle = "rgba(20,24,34,.9)";
+    jaggedRockEdge(ctx, w, gorgeTop + 60, camX * 0.7, 60, 260, true);
+    jaggedRockEdge(ctx, w, gorgeTop + 60, camX * 0.7 + 130, 60, 260, false);
+
+    // faint river glinting far below
+    ctx.fillStyle = "rgba(140,190,220,.25)";
+    ctx.save();
+    ctx.beginPath();
+    for (let x = 0; x <= w; x += 24) {
+      const wy = h - 34 + Math.sin((x + camX * 0.4) / 90) * 8;
+      ctx.lineTo(x, wy);
+    }
+    ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    // rising mist band over the depths
+    const mistGrad = ctx.createLinearGradient(0, gorgeTop + 120, 0, gorgeTop + 220);
+    mistGrad.addColorStop(0, "rgba(210,220,235,0)");
+    mistGrad.addColorStop(1, "rgba(210,220,235,.22)");
+    ctx.fillStyle = mistGrad;
+    ctx.fillRect(0, gorgeTop + 120, w, 100);
   }
 
-  function drawPlank(ctx, x, groundY, w) {
+  function jaggedRockEdge(ctx, w, topY, camOffset, amp, period, fromLeft) {
+    ctx.beginPath();
+    if (fromLeft) {
+      ctx.moveTo(0, topY);
+      for (let x = 0; x <= w * 0.4; x += 16) {
+        const wx = x + camOffset;
+        const y = topY + amp * (0.4 + 0.6 * Math.abs(Math.sin(wx / period * Math.PI * 2)));
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(w * 0.4, topY); ctx.closePath();
+    } else {
+      ctx.moveTo(w, topY);
+      for (let x = w; x >= w * 0.6; x -= 16) {
+        const wx = x + camOffset;
+        const y = topY + amp * (0.4 + 0.6 * Math.abs(Math.sin(wx / period * Math.PI * 2)));
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(w * 0.6, topY); ctx.closePath();
+    }
+    ctx.fill();
+  }
+
+  function drawBridgeSupportPost(ctx, x, groundY, railY) {
     ctx.save();
     ctx.translate(x, groundY);
-    ctx.fillStyle = "#8a6a42";
-    ctx.fillRect(-w/2, -8, w, 12);
-    ctx.strokeStyle = "#5a3a1e"; ctx.lineWidth = 2; ctx.strokeRect(-w/2, -8, w, 12);
-    ctx.strokeStyle = "#6b4a28"; ctx.lineWidth = 1.5;
-    for (let i = 1; i < 3; i++) { ctx.beginPath(); ctx.moveTo(-w/2 + i*w/3, -8); ctx.lineTo(-w/2 + i*w/3, 4); ctx.stroke(); }
+    ctx.fillStyle = "#5a3a1e";
+    roundRect(ctx, -6, railY - groundY - 4, 12, groundY - railY + 14, 3);
+    ctx.fill();
+    ctx.strokeStyle = "#3a2410"; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = "#7a5230";
+    ctx.beginPath(); ctx.arc(0, railY - groundY - 4, 7, 0, 7); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawPlank(ctx, x, groundY, w, wobble) {
+    ctx.save();
+    ctx.translate(x, groundY);
+    if (wobble) ctx.rotate(wobble);
+    const grad = ctx.createLinearGradient(0, -8, 0, 4);
+    grad.addColorStop(0, "#9a7850");
+    grad.addColorStop(1, "#7a5a36");
+    ctx.fillStyle = grad;
+    roundRect(ctx, -w / 2, -8, w, 12, 2);
+    ctx.fill();
+    ctx.strokeStyle = "#4a3018"; ctx.lineWidth = 2; ctx.stroke();
+    ctx.strokeStyle = "#5f4226"; ctx.lineWidth = 1.2;
+    for (let i = 1; i < 3; i++) { ctx.beginPath(); ctx.moveTo(-w/2 + i*w/3, -7); ctx.lineTo(-w/2 + i*w/3, 3); ctx.stroke(); }
+    // wood grain flecks
+    ctx.strokeStyle = "rgba(0,0,0,.15)"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(-w/2+3, -3); ctx.lineTo(w/2-3, -3); ctx.stroke();
+    // rope lashings tying the plank to the handrail ropes
+    ctx.strokeStyle = "#4a3018"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(-w/2+2, -8); ctx.lineTo(-w/2+2, -18); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(w/2-2, -8); ctx.lineTo(w/2-2, -18); ctx.stroke();
     ctx.restore();
   }
 
   function drawRope(ctx, x1, y1, x2, y2, sag) {
-    ctx.strokeStyle = "#7a5a34"; ctx.lineWidth = 3; ctx.lineCap = "round";
+    // twisted double-strand rope for a sturdier, more rickety-realistic look
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "#6b4a28"; ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.moveTo(x1, y1);
-    ctx.quadraticCurveTo((x1+x2)/2, Math.max(y1,y2) + sag, x2, y2);
+    ctx.quadraticCurveTo((x1 + x2) / 2, Math.max(y1, y2) + sag, x2, y2);
+    ctx.stroke();
+    ctx.strokeStyle = "#8a6a42"; ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1 - 1);
+    ctx.quadraticCurveTo((x1 + x2) / 2, Math.max(y1, y2) + sag - 1, x2, y2 - 1);
     ctx.stroke();
   }
 
@@ -652,55 +739,265 @@ const Art = (() => {
     ctx.restore();
   }
 
-  function drawTowerInteriorBG(ctx, w, h) {
-    skyGradient(ctx, w, h, ["#241a3a", "#3a2a55"]);
-    ctx.fillStyle = "#332448";
-    ctx.fillRect(0, 0, w, h);
-    // stone bricks
-    ctx.strokeStyle = "rgba(0,0,0,.25)"; ctx.lineWidth = 1.5;
-    for (let row = 0; row < h / 40; row++) {
-      const offset = (row % 2) * 30;
-      for (let col = -1; col < w / 60 + 1; col++) {
-        ctx.strokeRect(col * 60 + offset, row * 40, 60, 40);
+  function drawTowerInteriorBG(ctx, w, h, t) {
+    t = t || 0;
+    skyGradient(ctx, w, h, ["#2a1f42", "#4a3766", "#3a2a55"]);
+    // rounded stone wall: vertical bands with alternating shade give the
+    // room a curved, turret-like feel instead of a flat brick grid
+    const bandW = 54;
+    for (let x = -bandW; x < w + bandW; x += bandW) {
+      const curve = Math.cos((x / w - 0.5) * Math.PI);
+      ctx.fillStyle = `rgba(20,14,34,${0.05 + (1 - curve) * 0.12})`;
+      ctx.fillRect(x, 0, bandW, h);
+    }
+    ctx.strokeStyle = "rgba(0,0,0,.22)"; ctx.lineWidth = 1.2;
+    for (let row = 0; row < h / 34; row++) {
+      const offset = (row % 2) * 27;
+      for (let col = -1; col < w / 54 + 1; col++) {
+        ctx.strokeRect(col * 54 + offset, row * 34, 54, 34);
       }
     }
-    // window with moon
-    ctx.fillStyle = "#7fc8e8";
-    roundRect(ctx, w - 140, 40, 70, 90, 10); ctx.fill();
+
+    // large gothic arched window with moon + stars
+    const winX = w - 168, winY = 34, winW = 92, winH = 130;
+    ctx.fillStyle = "#6fb8dc";
+    ctx.beginPath();
+    ctx.moveTo(winX, winY + winH);
+    ctx.lineTo(winX, winY + 40);
+    ctx.quadraticCurveTo(winX, winY, winX + winW / 2, winY);
+    ctx.quadraticCurveTo(winX + winW, winY, winX + winW, winY + 40);
+    ctx.lineTo(winX + winW, winY + winH);
+    ctx.closePath();
+    ctx.fill();
     ctx.fillStyle = "#fdf6d8";
-    ctx.beginPath(); ctx.arc(w - 110, 80, 20, 0, 7); ctx.fill();
-    ctx.strokeStyle = "#241a3a"; ctx.lineWidth = 6;
-    ctx.beginPath(); ctx.moveTo(w-140,85); ctx.lineTo(w-70,85); ctx.moveTo(w-105,40); ctx.lineTo(w-105,130); ctx.stroke();
-    ground(ctx, w, h, h - 60, "#4a3a60", "#2a1e3c");
+    ctx.beginPath(); ctx.arc(winX + winW * 0.55, winY + 46, 22, 0, 7); ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,.85)";
+    [[0.2, 0.25], [0.75, 0.15], [0.15, 0.55], [0.85, 0.5]].forEach(([px, py]) => {
+      const twinkle = 0.5 + 0.5 * Math.sin(t * 3 + px * 10);
+      ctx.globalAlpha = 0.4 + twinkle * 0.5;
+      ctx.beginPath(); ctx.arc(winX + winW * px, winY + winH * py, 1.6, 0, 7); ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = "#241a3a"; ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(winX, winY + winH); ctx.lineTo(winX, winY + 40);
+    ctx.quadraticCurveTo(winX, winY, winX + winW / 2, winY);
+    ctx.quadraticCurveTo(winX + winW, winY, winX + winW, winY + 40);
+    ctx.lineTo(winX + winW, winY + winH);
+    ctx.moveTo(winX, winY + 70); ctx.lineTo(winX + winW, winY + 70);
+    ctx.moveTo(winX + winW / 2, winY + 5); ctx.lineTo(winX + winW / 2, winY + winH);
+    ctx.stroke();
+
+    // moonlight beam falling across the floor
+    const floorY = h - 70;
+    const beamGrad = ctx.createLinearGradient(winX, winY, winX - 260, floorY + 40);
+    beamGrad.addColorStop(0, "rgba(220,235,255,.16)");
+    beamGrad.addColorStop(1, "rgba(220,235,255,0)");
+    ctx.fillStyle = beamGrad;
+    ctx.beginPath();
+    ctx.moveTo(winX, winY + 40);
+    ctx.lineTo(winX + winW, winY + 40);
+    ctx.lineTo(winX + winW - 240, floorY);
+    ctx.lineTo(winX - 260, floorY);
+    ctx.closePath();
+    ctx.fill();
+
+    // wooden floor
+    ground(ctx, w, h, floorY, "#7a5a38", "#4a341f");
+    ctx.strokeStyle = "rgba(0,0,0,.2)"; ctx.lineWidth = 1.4;
+    for (let x = -20; x < w; x += 46) { ctx.beginPath(); ctx.moveTo(x, floorY); ctx.lineTo(x + 14, h); ctx.stroke(); }
+
+    // round rug
+    ctx.fillStyle = "#c94f6e";
+    ctx.beginPath(); ctx.ellipse(w / 2 - 40, floorY + 34, 130, 22, 0, 0, 7); ctx.fill();
+    ctx.strokeStyle = "#8a2f48"; ctx.lineWidth = 3; ctx.stroke();
+    ctx.strokeStyle = "#e8a1b6"; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.ellipse(w / 2 - 40, floorY + 34, 100, 15, 0, 0, 7); ctx.stroke();
+
+    // four-poster bed, back-left corner
+    ctx.save();
+    ctx.translate(70, floorY - 6);
+    ctx.strokeStyle = "#3a2818"; ctx.lineWidth = 6; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(-40, 4); ctx.lineTo(-40, -78); ctx.moveTo(48, 4); ctx.lineTo(48, -92); ctx.stroke();
+    ctx.fillStyle = "#8a3a52";
+    roundRect(ctx, -46, -84, 100, 10, 3); ctx.fill();
+    ctx.fillStyle = "rgba(180,120,150,.5)";
+    ctx.beginPath(); ctx.moveTo(-40, -78); ctx.lineTo(48, -92); ctx.lineTo(48, -30); ctx.lineTo(-40, -30); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "#e8d8c8";
+    roundRect(ctx, -38, -34, 82, 22, 6); ctx.fill();
+    ctx.fillStyle = "#f4e9dc";
+    roundRect(ctx, -34, -40, 26, 16, 6); ctx.fill();
+    ctx.fillStyle = "#c94f6e";
+    roundRect(ctx, -38, -16, 82, 20, 3); ctx.fill();
+    ctx.restore();
+
+    // candle on a small table, warm light contrasting the cool moonlight
+    ctx.save();
+    ctx.translate(w / 2 + 150, floorY - 4);
+    ctx.fillStyle = "#5a3a1e"; roundRect(ctx, -18, -4, 36, 6, 2); ctx.fill();
+    ctx.strokeStyle = "#3a2410"; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(-14, 2); ctx.lineTo(-14, 24); ctx.moveTo(14, 2); ctx.lineTo(14, 24); ctx.stroke();
+    ctx.fillStyle = "#f4e9d8"; roundRect(ctx, -3, -20, 6, 16, 2); ctx.fill();
+    const flick = 0.7 + 0.3 * Math.sin(t * 16);
+    const cg = ctx.createRadialGradient(0, -24, 1, 0, -24, 22 * flick);
+    cg.addColorStop(0, "rgba(255,210,120,.8)"); cg.addColorStop(1, "rgba(255,210,120,0)");
+    ctx.fillStyle = cg; ctx.beginPath(); ctx.arc(0, -24, 22 * flick, 0, 7); ctx.fill();
+    ctx.fillStyle = "#ffb238"; ctx.beginPath(); ctx.ellipse(0, -25, 2.4, 5 * flick, 0, 0, 7); ctx.fill();
+    ctx.restore();
+
+    // hanging tapestry banner
+    ctx.fillStyle = "#5a3a6e";
+    roundRect(ctx, 190, 30, 56, 120, 4); ctx.fill();
+    ctx.strokeStyle = "#3a2450"; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = "#ffd76a";
+    ctx.beginPath();
+    ctx.moveTo(218, 60); ctx.bezierCurveTo(206, 50, 196, 62, 218, 78); ctx.bezierCurveTo(240, 62, 230, 50, 218, 60);
+    ctx.fill();
   }
 
-  function drawWeddingBG(ctx, w, h, confettiFall) {
-    skyGradient(ctx, w, h, ["#ffd9ec", "#fff3d6"]);
-    ctx.fillStyle = "#ffe9c9";
-    parallaxHills(ctx, w, h - 90, 0, 40, 500);
-    ground(ctx, w, h, h - 90, "#c9e6b0", "#9ecb7f");
-    // arch
-    const cx = w / 2;
-    ctx.strokeStyle = "#c9a13b"; ctx.lineWidth = 10; ctx.lineCap = "round";
+  function drawTorch(ctx, x, y, t) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.fillStyle = "#3a2818";
+    roundRect(ctx, -3, 0, 6, 22, 2); ctx.fill();
+    ctx.fillStyle = "#241a10";
+    roundRect(ctx, -7, -4, 14, 8, 2); ctx.fill();
+    const flick = 0.75 + 0.25 * Math.sin(t * 14 + x);
+    const g = ctx.createRadialGradient(0, -14, 1, 0, -14, 26 * flick);
+    g.addColorStop(0, "rgba(255,180,80,.75)"); g.addColorStop(1, "rgba(255,140,40,0)");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, -14, 26 * flick, 0, 7); ctx.fill();
+    ctx.fillStyle = "#ff7a2e";
     ctx.beginPath();
-    ctx.moveTo(cx - 90, h - 90);
-    ctx.quadraticCurveTo(cx - 90, h - 250, cx, h - 260);
-    ctx.quadraticCurveTo(cx + 90, h - 250, cx + 90, h - 90);
-    ctx.stroke();
-    // flowers on arch
-    const flowerColors = ["#ff8fc7", "#ffd76a", "#c9a1ff", "#8fd3f4"];
-    for (let i = 0; i <= 12; i++) {
-      const tt = i / 12;
-      const ang = Math.PI * (1 - tt);
-      const fx = cx + Math.cos(ang) * 90;
-      const fy = h - 260 + 90 - Math.sin(ang) * 90 + (h-90-(h-260+90))*0 ;
-      // approximate arch curve position
-      const px = cx + (tt - 0.5) * 180;
-      const py = h - 260 + Math.pow((tt - 0.5) * 2, 2) * 170;
-      ctx.fillStyle = flowerColors[i % flowerColors.length];
-      ctx.beginPath(); ctx.arc(px, py, 6, 0, 7); ctx.fill();
+    ctx.moveTo(0, -6);
+    ctx.quadraticCurveTo(7, -16, 2, -24 * flick);
+    ctx.quadraticCurveTo(0, -16, -6, -8);
+    ctx.quadraticCurveTo(-2, -12, 0, -6);
+    ctx.fill();
+    ctx.fillStyle = "#ffd76a";
+    ctx.beginPath(); ctx.ellipse(0, -14, 2.5, 6 * flick, 0, 0, 7); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawTowerShaftBG(ctx, w, h) {
+    const g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, "#241a34"); g.addColorStop(1, "#100a1c");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = "rgba(0,0,0,.3)"; ctx.lineWidth = 1.2;
+    for (let row = 0; row < h / 32; row++) {
+      const offset = (row % 2) * 26;
+      for (let col = -1; col < w / 52 + 1; col++) ctx.strokeRect(col * 52 + offset, row * 32, 52, 32);
     }
-    ground(ctx, w, h, h - 90, "#c9e6b0", "#9ecb7f");
+    // arrow-slit windows letting moonlight in
+    [0.16, 0.82].forEach((fx) => {
+      const wx = w * fx;
+      ctx.fillStyle = "rgba(140,180,220,.35)";
+      roundRect(ctx, wx - 6, h * 0.18, 12, 70, 5); ctx.fill();
+      roundRect(ctx, wx - 6, h * 0.55, 12, 70, 5); ctx.fill();
+    });
+  }
+
+  function drawStairFlight(ctx, x1, y1, x2, y2, steps) {
+    ctx.save();
+    ctx.strokeStyle = "#4a341f"; ctx.lineWidth = 2;
+    ctx.fillStyle = "#5a4028";
+    const dx = (x2 - x1) / steps, dy = (y2 - y1) / steps;
+    for (let i = 0; i < steps; i++) {
+      const sx = x1 + dx * i, sy = y1 + dy * i;
+      ctx.fillRect(Math.min(sx, sx + dx) - 22, sy, Math.abs(dx) + 44, 8);
+      ctx.strokeRect(Math.min(sx, sx + dx) - 22, sy, Math.abs(dx) + 44, 8);
+    }
+    // banister rail following the flight
+    ctx.strokeStyle = "#8a6a42"; ctx.lineWidth = 3; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(x1 - 24, y1 - 14); ctx.lineTo(x2 - 24, y2 - 14); ctx.stroke();
+    ctx.restore();
+  }
+
+  function flowerBunch(ctx, x, y, scale, colors) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(scale, scale);
+    ctx.fillStyle = "#4a8a44";
+    [[-8, 4], [8, 4], [0, 10]].forEach(([lx, ly]) => {
+      ctx.beginPath(); ctx.ellipse(lx, ly, 7, 3, lx * 0.1, 0, 7); ctx.fill();
+    });
+    const pts = [[-6, -4], [6, -4], [0, -8], [-4, 4], [4, 4], [0, 0]];
+    pts.forEach(([px, py], i) => {
+      ctx.fillStyle = colors[i % colors.length];
+      ctx.beginPath(); ctx.arc(px, py, 5.4, 0, 7); ctx.fill();
+    });
+    ctx.fillStyle = "#fff6c9";
+    ctx.beginPath(); ctx.arc(0, -1, 2.6, 0, 7); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawWeddingBG(ctx, w, h) {
+    // warm sunset sky
+    skyGradient(ctx, w, h, ["#ff9ec4", "#ffcf9e", "#fff3d6"]);
+    ctx.fillStyle = "rgba(255,255,255,.9)";
+    ctx.beginPath(); ctx.arc(w * 0.78, h * 0.22, 46, 0, 7); ctx.fill();
+    const sunGlow = ctx.createRadialGradient(w * 0.78, h * 0.22, 10, w * 0.78, h * 0.22, 120);
+    sunGlow.addColorStop(0, "rgba(255,230,190,.55)"); sunGlow.addColorStop(1, "rgba(255,230,190,0)");
+    ctx.fillStyle = sunGlow; ctx.beginPath(); ctx.arc(w * 0.78, h * 0.22, 120, 0, 7); ctx.fill();
+
+    // distant castle silhouette for a fairy-tale skyline
+    ctx.fillStyle = "rgba(210,140,170,.5)";
+    [0.08, 0.9].forEach((fx) => drawCastleTower(ctx, w * fx, h - 150, 90));
+
+    ctx.fillStyle = "#ffe9c9";
+    parallaxHills(ctx, w, h - 150, 0, 40, 500);
+    ground(ctx, w, h, h - 150, "#c9e6b0", "#9ecb7f");
+
+    const cx = w / 2;
+    // red carpet aisle leading to the arch
+    ctx.fillStyle = "#c94f5e";
+    ctx.beginPath();
+    ctx.moveTo(cx - 130, h); ctx.lineTo(cx + 130, h);
+    ctx.lineTo(cx + 40, h - 150); ctx.lineTo(cx - 40, h - 150);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = "#a63848"; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(cx - 130, h); ctx.lineTo(cx - 40, h - 150); ctx.moveTo(cx + 130, h); ctx.lineTo(cx + 40, h - 150); ctx.stroke();
+
+    // flower bunches lining the aisle
+    const flowerColors = ["#ff8fc7", "#ffd76a", "#c9a1ff", "#8fd3f4"];
+    for (let i = 0; i < 4; i++) {
+      const tt = i / 3;
+      const yy = h - 20 - tt * 120;
+      const spread = 150 - tt * 90;
+      flowerBunch(ctx, cx - spread, yy, 1.1 - tt * 0.3, flowerColors);
+      flowerBunch(ctx, cx + spread, yy, 1.1 - tt * 0.3, flowerColors);
+    }
+
+    // wooden arch posts + rounded top beam
+    ctx.strokeStyle = "#7a5230"; ctx.lineWidth = 14; ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(cx - 92, h - 150); ctx.lineTo(cx - 92, h - 250);
+    ctx.moveTo(cx + 92, h - 150); ctx.lineTo(cx + 92, h - 250);
+    ctx.stroke();
+    ctx.strokeStyle = "#c9a13b"; ctx.lineWidth = 10;
+    ctx.beginPath();
+    ctx.moveTo(cx - 92, h - 250);
+    ctx.quadraticCurveTo(cx - 92, h - 296, cx, h - 300);
+    ctx.quadraticCurveTo(cx + 92, h - 296, cx + 92, h - 250);
+    ctx.stroke();
+
+    // flower garland draped along the arch
+    for (let i = 0; i <= 10; i++) {
+      const tt = i / 10;
+      const ang = Math.PI * (1 - tt);
+      const px = cx + Math.cos(ang) * 92;
+      const py = h - 250 - Math.sin(ang) * 50 - Math.sin(ang) * 0;
+      const archY = h - 300 + (1 - Math.sin(ang)) * 50;
+      flowerBunch(ctx, px, h - 250 - Math.sin(ang) * 50, 0.7, flowerColors);
+    }
+    // flower bunches at the base of each post
+    flowerBunch(ctx, cx - 92, h - 138, 1.3, flowerColors);
+    flowerBunch(ctx, cx + 92, h - 138, 1.3, flowerColors);
+
+    ground(ctx, w, h, h - 150, "#c9e6b0", "#9ecb7f");
+    // re-draw the carpet's near edge over the ground seam so it isn't cut off
+    ctx.fillStyle = "#c94f5e";
+    ctx.beginPath(); ctx.moveTo(cx - 130, h); ctx.lineTo(cx + 130, h); ctx.lineTo(cx + 40, h - 150); ctx.lineTo(cx - 40, h - 150); ctx.closePath(); ctx.fill();
   }
 
   return {
@@ -708,7 +1005,8 @@ const Art = (() => {
     drawLog, drawRock, drawSpikes, drawBarrel, drawGap, drawGate,
     drawHeartParticle, drawConfetti, drawSparkle, drawDust,
     drawForestBG, drawBridgeBG, drawCastleBG, drawTowerInteriorBG, drawWeddingBG,
-    drawPlank, drawRope, ground, roundRect,
+    drawPlank, drawRope, drawBridgeSupportPost, drawTorch, drawTowerShaftBG, drawStairFlight,
+    ground, roundRect,
     get knightFaceReady() { return knightFaceReady; },
     get princessFaceReady() { return princessFaceReady; },
   };

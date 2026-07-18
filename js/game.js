@@ -147,7 +147,7 @@
       music: "bridge",
       introLine: { who: "knight", text: "A rickety bridge? Cute. My knees are already worse than this bridge." },
       clearLine: { who: "knight", text: "Careful now... can't propose with a broken leg.", used: false },
-      slimeLine: { who: "knight", text: "Bats, huh? At least they're not my future mother-in-law... yet.", used: false },
+      slimeLine: { who: "knight", text: "Bats, huh? Nothing scarier than showing up late to your own rescue.", used: false },
     };
   }
   function makeLevel3() {
@@ -538,28 +538,74 @@
   }
 
   // ---------------- Tower climb cutscene ----------------
+  const CLIMB_DURATION = 3.8;
+  const STAIR_PATH = [
+    { x: 480, y: 500 },
+    { x: 630, y: 428 },
+    { x: 330, y: 344 },
+    { x: 630, y: 260 },
+    { x: 330, y: 176 },
+    { x: 480, y: 96 },
+  ];
+  const STAIR_SEGMENTS = [];
+  (function buildStairSegments() {
+    let total = 0;
+    for (let i = 0; i < STAIR_PATH.length - 1; i++) {
+      const a = STAIR_PATH[i], b = STAIR_PATH[i + 1];
+      const len = Math.hypot(b.x - a.x, b.y - a.y);
+      STAIR_SEGMENTS.push({ a, b, len });
+      total += len;
+    }
+    STAIR_SEGMENTS.total = total;
+  })();
+  function stairPosition(progress) {
+    const target = Math.max(0, Math.min(1, progress)) * STAIR_SEGMENTS.total;
+    let covered = 0;
+    for (const seg of STAIR_SEGMENTS) {
+      if (target <= covered + seg.len || seg === STAIR_SEGMENTS[STAIR_SEGMENTS.length - 1]) {
+        const segT = seg.len > 0 ? Math.min(1, (target - covered) / seg.len) : 1;
+        return {
+          x: seg.a.x + (seg.b.x - seg.a.x) * segT,
+          y: seg.a.y + (seg.b.y - seg.a.y) * segT,
+          facing: seg.b.x >= seg.a.x ? 1 : -1,
+        };
+      }
+      covered += seg.len;
+    }
+    const last = STAIR_PATH[STAIR_PATH.length - 1];
+    return { x: last.x, y: last.y, facing: 1 };
+  }
   let climbT = 0;
   function startTowerClimb() {
     STATE = "towerclimb"; climbT = 0; showControls(false);
     Audio2.playMusic("tower");
+    showBanner("Up the tower stairs...", 2000);
   }
   function updateTowerClimb(dt) {
     climbT += dt;
-    if (Math.floor(climbT * 6) !== Math.floor((climbT - dt) * 6)) Audio2.sfx.footstep();
-    if (climbT > 3.1) startRescue();
+    if (Math.floor(climbT * 7) !== Math.floor((climbT - dt) * 7)) Audio2.sfx.footstep();
+    if (climbT > CLIMB_DURATION) startRescue();
   }
   function drawTowerClimb() {
-    Art.drawCastleBG(ctx, VW, VH, 260, GROUND_Y);
+    Art.drawTowerShaftBG(ctx, VW, VH);
+    for (let i = 1; i < STAIR_PATH.length - 1; i++) {
+      Art.drawTorch(ctx, STAIR_PATH[i].x + (i % 2 === 0 ? -46 : 46), STAIR_PATH[i].y - 6, t);
+    }
+    for (const seg of STAIR_SEGMENTS) {
+      Art.drawStairFlight(ctx, seg.a.x, seg.a.y, seg.b.x, seg.b.y, 7);
+    }
+    // door at the top landing
     ctx.save();
-    ctx.fillStyle = "rgba(20,10,35,.55)";
-    ctx.fillRect(0, 0, VW, VH);
+    ctx.translate(STAIR_PATH[STAIR_PATH.length - 1].x, STAIR_PATH[STAIR_PATH.length - 1].y - 40);
+    ctx.fillStyle = "#4a3420";
+    Art.roundRect(ctx, -22, -40, 44, 44, 10); ctx.fill();
+    ctx.strokeStyle = "#2a1c10"; ctx.lineWidth = 3; ctx.stroke();
+    ctx.fillStyle = "#ffd76a"; ctx.beginPath(); ctx.arc(12, -18, 2.4, 0, 7); ctx.fill();
     ctx.restore();
-    const climbY = GROUND_Y - Math.min(1, climbT / 3.1) * 260;
-    Art.drawKnight(ctx, VW / 2, climbY, { facing: 1, state: "run", t });
-    ctx.fillStyle = "#fff";
-    ctx.font = "bold 20px sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText("Climbing the tower...", VW / 2, 60);
+
+    const progress = Math.min(1, climbT / CLIMB_DURATION);
+    const pos = stairPosition(progress);
+    Art.drawKnight(ctx, pos.x, pos.y - 4, { facing: pos.facing, state: "run", t });
   }
 
   // ---------------- Rescue scene ----------------
@@ -606,7 +652,7 @@
   }
 
   function drawRescue() {
-    Art.drawTowerInteriorBG(ctx, VW, VH);
+    Art.drawTowerInteriorBG(ctx, VW, VH, t);
     Art.drawPrincess(ctx, VW / 2 + 60, GROUND_Y - 60, { facing: -1, t });
     Art.drawKnight(ctx, VW / 2 - 60, GROUND_Y - 60, { facing: 1, t, holdFlower: knight.holdFlower });
   }
@@ -634,7 +680,7 @@
     updateParticles(dt);
   }
   function drawWedding() {
-    Art.drawWeddingBG(ctx, VW, VH, true);
+    Art.drawWeddingBG(ctx, VW, VH);
     Art.drawPrincess(ctx, VW / 2 + 34, GROUND_Y - 90, { facing: -1, t, wedding: true });
     Art.drawKnight(ctx, VW / 2 - 34, GROUND_Y - 90, { facing: 1, t, wedding: true });
     drawParticles();
@@ -663,13 +709,27 @@
     ctx.save();
     ctx.translate(-camX, 0);
 
-    // bridge planks (skip over gaps)
+    // rope bridge: handrail strung between support posts, tie-ropes down to
+    // each plank, planks skipped over gaps so the deck actually looks broken
     if (level.bg === "bridge") {
-      for (let x = 0; x <= level.length; x += 40) {
-        if (groundExistsAtStatic(x)) Art.drawPlank(ctx, x, GROUND_Y, 42);
+      const railY = GROUND_Y - 42;
+      const postSpacing = 240;
+      for (let x = 0; x <= level.length; x += postSpacing) {
+        Art.drawBridgeSupportPost(ctx, x, GROUND_Y, railY);
       }
-      for (const g of level.gaps) {
-        Art.drawRope(ctx, g.x - g.w / 2 - 30, GROUND_Y - 30, g.x + g.w / 2 + 30, GROUND_Y - 30, 14);
+      for (let x = 0; x < level.length; x += postSpacing) {
+        const segEnd = Math.min(x + postSpacing, level.length);
+        Art.drawRope(ctx, x, railY, segEnd, railY, 10);
+      }
+      for (let x = 0; x <= level.length; x += 40) {
+        ctx.strokeStyle = "rgba(74,48,24,.55)"; ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.moveTo(x, railY); ctx.lineTo(x, GROUND_Y - 6); ctx.stroke();
+      }
+      for (let x = 0; x <= level.length; x += 40) {
+        if (groundExistsAtStatic(x)) {
+          const wobble = Math.sin(t * 2.4 + x * 0.05) * 0.03;
+          Art.drawPlank(ctx, x, GROUND_Y, 42, wobble);
+        }
       }
     }
 
