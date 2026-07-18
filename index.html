@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Knight of College Lane</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<canvas id="game"></canvas>
+
+<!-- ROTATE OVERLAY -->
+<div id="rotateOverlay" class="overlay hidden">
+  <div class="rotateIcon">📱</div>
+  <div class="overlayTitle">Turn your phone sideways!</div>
+  <div class="overlaySub">This adventure is best in landscape 🔄</div>
+</div>
+
+<!-- START SCREEN -->
+<div id="startScreen" class="overlay">
+  <div class="titleWrap">
+    <div class="crown">👑</div>
+    <h1>Knight of<br>College Lane</h1>
+    <div class="subtitle">a tiny, true, ridiculous love story</div>
+  </div>
+  <div class="portraitRow">
+    <div class="portraitFrame knightFrame"><img src="assets/knight-face-cropped.jpg" alt="knight"></div>
+    <div class="heartBetween">💗</div>
+    <div class="portraitFrame princessFrame"><img src="assets/princess-face-cropped.jpg" alt="princess"></div>
+  </div>
+  <div class="names">Sir Farrukh <span class="amp">&amp;</span> Princess Adelina</div>
+  <button id="startBtn" class="bigBtn">Tap to Begin ▶</button>
+  <div class="howto">🕹️ joystick to move &amp; jump &nbsp;&nbsp; ⚔️ button to attack</div>
+</div>
+
+<!-- LEVEL BANNER -->
+<div id="levelBanner" class="banner hidden"></div>
+
+<!-- HUD -->
+<div id="hud" class="hidden">
+  <div id="hearts">❤️❤️❤️</div>
+  <button id="muteBtn">🔊</button>
+</div>
+
+<!-- DIALOGUE BOX -->
+<div id="dialogueBox" class="hidden">
+  <div id="dialoguePortrait"></div>
+  <div id="dialogueTextWrap">
+    <div id="dialogueName"></div>
+    <div id="dialogueText"></div>
+  </div>
+  <div id="dialogueTap">tap ▶</div>
+</div>
+
+<!-- CONTROLS -->
+<div id="controls" class="hidden">
+  <div id="joystickBase">
+    <div id="joystickKnob"></div>
+  </div>
+  <button id="attackBtn">⚔️</button>
+</div>
+
+<!-- END SCREEN -->
+<div id="endScreen" class="overlay hidden">
+  <div class="ringsWrap">💍</div>
+  <h1>Happily<br>Ever After</h1>
+  <div class="subtitle" id="endSubtitle">Sir Farrukh &amp; Princess Adelina, married this day.</div>
+  <button id="restartBtn" class="bigBtn">Play Again ▶</button>
+</div>
+
+<script src="js/audio.js"></script>
+<script src="js/art.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
