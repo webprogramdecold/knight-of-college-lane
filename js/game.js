@@ -588,24 +588,34 @@
   }
   function drawTowerClimb() {
     Art.drawTowerShaftBG(ctx, VW, VH);
-    for (let i = 1; i < STAIR_PATH.length - 1; i++) {
-      Art.drawTorch(ctx, STAIR_PATH[i].x + (i % 2 === 0 ? -46 : 46), STAIR_PATH[i].y - 6, t);
-    }
     for (const seg of STAIR_SEGMENTS) {
       Art.drawStairFlight(ctx, seg.a.x, seg.a.y, seg.b.x, seg.b.y, 7);
     }
+    // solid landings at every waypoint so the flights connect on solid
+    // ground instead of meeting at a bare corner
+    for (let i = 0; i < STAIR_PATH.length; i++) {
+      Art.drawStairLanding(ctx, STAIR_PATH[i].x, STAIR_PATH[i].y, 92);
+    }
+    for (let i = 1; i < STAIR_PATH.length - 1; i++) {
+      Art.drawTorch(ctx, STAIR_PATH[i].x + (i % 2 === 0 ? -46 : 46), STAIR_PATH[i].y - 10, t);
+    }
     // door at the top landing
     ctx.save();
-    ctx.translate(STAIR_PATH[STAIR_PATH.length - 1].x, STAIR_PATH[STAIR_PATH.length - 1].y - 40);
+    ctx.translate(STAIR_PATH[STAIR_PATH.length - 1].x, STAIR_PATH[STAIR_PATH.length - 1].y - 6);
     ctx.fillStyle = "#4a3420";
-    Art.roundRect(ctx, -22, -40, 44, 44, 10); ctx.fill();
+    Art.roundRect(ctx, -22, -44, 44, 44, 10); ctx.fill();
     ctx.strokeStyle = "#2a1c10"; ctx.lineWidth = 3; ctx.stroke();
-    ctx.fillStyle = "#ffd76a"; ctx.beginPath(); ctx.arc(12, -18, 2.4, 0, 7); ctx.fill();
+    ctx.fillStyle = "#ffd76a"; ctx.beginPath(); ctx.arc(12, -22, 2.4, 0, 7); ctx.fill();
     ctx.restore();
 
     const progress = Math.min(1, climbT / CLIMB_DURATION);
     const pos = stairPosition(progress);
-    Art.drawKnight(ctx, pos.x, pos.y - 4, { facing: pos.facing, state: "run", t });
+    ctx.save();
+    ctx.globalAlpha = 0.25;
+    ctx.fillStyle = "#000";
+    ctx.beginPath(); ctx.ellipse(pos.x, pos.y + 3, 15, 4, 0, 0, 7); ctx.fill();
+    ctx.restore();
+    Art.drawKnight(ctx, pos.x, pos.y, { facing: pos.facing, state: "run", t });
   }
 
   // ---------------- Rescue scene ----------------

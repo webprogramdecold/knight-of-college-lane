@@ -899,17 +899,54 @@ const Art = (() => {
 
   function drawStairFlight(ctx, x1, y1, x2, y2, steps) {
     ctx.save();
-    ctx.strokeStyle = "#4a341f"; ctx.lineWidth = 2;
-    ctx.fillStyle = "#5a4028";
+    const overhang = 24;
+    const bottomY = Math.max(y1, y2) + 34;
+    // solid ramp body first, so the flight reads as one solid staircase mass
+    // with no gaps beneath it — never floating slats.
+    const grad = ctx.createLinearGradient(0, Math.min(y1, y2), 0, bottomY);
+    grad.addColorStop(0, "#6a4c2c");
+    grad.addColorStop(1, "#2e2012");
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.moveTo(x1 - overhang, y1);
+    ctx.lineTo(x2 + overhang, y2);
+    ctx.lineTo(x2 + overhang, bottomY);
+    ctx.lineTo(x1 - overhang, bottomY);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = "#1c130a"; ctx.lineWidth = 2; ctx.stroke();
+
+    // step nosing ridges on top of the solid body for stair texture
     const dx = (x2 - x1) / steps, dy = (y2 - y1) / steps;
-    for (let i = 0; i < steps; i++) {
+    ctx.strokeStyle = "rgba(0,0,0,.4)"; ctx.lineWidth = 1.6;
+    for (let i = 1; i < steps; i++) {
       const sx = x1 + dx * i, sy = y1 + dy * i;
-      ctx.fillRect(Math.min(sx, sx + dx) - 22, sy, Math.abs(dx) + 44, 8);
-      ctx.strokeRect(Math.min(sx, sx + dx) - 22, sy, Math.abs(dx) + 44, 8);
+      ctx.beginPath(); ctx.moveTo(sx - overhang, sy); ctx.lineTo(sx + overhang, sy); ctx.stroke();
     }
-    // banister rail following the flight
+    ctx.strokeStyle = "rgba(255,255,255,.12)"; ctx.lineWidth = 1;
+    for (let i = 0; i < steps; i++) {
+      const sx = x1 + dx * i + dx * 0.5, sy = y1 + dy * i + dy * 0.5 - 1;
+      ctx.beginPath(); ctx.moveTo(sx - overhang, sy); ctx.lineTo(sx + overhang, sy); ctx.stroke();
+    }
+
+    // banister rail + posts following the flight
     ctx.strokeStyle = "#8a6a42"; ctx.lineWidth = 3; ctx.lineCap = "round";
-    ctx.beginPath(); ctx.moveTo(x1 - 24, y1 - 14); ctx.lineTo(x2 - 24, y2 - 14); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x1 - overhang, y1 - 16); ctx.lineTo(x2 + overhang, y2 - 16); ctx.stroke();
+    ctx.strokeStyle = "#5a4028"; ctx.lineWidth = 2.4;
+    for (let i = 0; i <= steps; i += 2) {
+      const sx = x1 + dx * i, sy = y1 + dy * i;
+      ctx.beginPath(); ctx.moveTo(sx + overhang * (dx >= 0 ? 1 : -1) * 0.85, sy); ctx.lineTo(sx + overhang * (dx >= 0 ? 1 : -1) * 0.85, sy - 16); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawStairLanding(ctx, x, y, w) {
+    ctx.save();
+    ctx.fillStyle = "#4a341f";
+    roundRect(ctx, x - w / 2, y - 6, w, 16, 3); ctx.fill();
+    ctx.strokeStyle = "#1c130a"; ctx.lineWidth = 2; ctx.stroke();
+    ctx.strokeStyle = "rgba(0,0,0,.25)"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x - w / 2 + 4, y - 1); ctx.lineTo(x + w / 2 - 4, y - 1); ctx.stroke();
     ctx.restore();
   }
 
@@ -1005,7 +1042,7 @@ const Art = (() => {
     drawLog, drawRock, drawSpikes, drawBarrel, drawGap, drawGate,
     drawHeartParticle, drawConfetti, drawSparkle, drawDust,
     drawForestBG, drawBridgeBG, drawCastleBG, drawTowerInteriorBG, drawWeddingBG,
-    drawPlank, drawRope, drawBridgeSupportPost, drawTorch, drawTowerShaftBG, drawStairFlight,
+    drawPlank, drawRope, drawBridgeSupportPost, drawTorch, drawTowerShaftBG, drawStairFlight, drawStairLanding,
     ground, roundRect,
     get knightFaceReady() { return knightFaceReady; },
     get princessFaceReady() { return princessFaceReady; },
