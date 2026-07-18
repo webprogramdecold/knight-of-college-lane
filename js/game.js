@@ -663,8 +663,14 @@
 
   function drawRescue() {
     Art.drawTowerInteriorBG(ctx, VW, VH, t);
-    Art.drawPrincess(ctx, VW / 2 + 60, GROUND_Y - 60, { facing: -1, t });
-    Art.drawKnight(ctx, VW / 2 - 60, GROUND_Y - 60, { facing: 1, t, holdFlower: knight.holdFlower });
+    const floorY = VH - 70 - 2; // matches the floor line inside drawTowerInteriorBG
+    ctx.save();
+    ctx.globalAlpha = 0.25; ctx.fillStyle = "#000";
+    ctx.beginPath(); ctx.ellipse(VW / 2 + 60, floorY + 5, 20, 6, 0, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(VW / 2 - 60, floorY + 5, 20, 6, 0, 0, 7); ctx.fill();
+    ctx.restore();
+    Art.drawPrincess(ctx, VW / 2 + 60, floorY, { facing: -1, t });
+    Art.drawKnight(ctx, VW / 2 - 60, floorY, { facing: 1, t, holdFlower: knight.holdFlower });
   }
 
   // ---------------- Wedding scene ----------------
@@ -691,8 +697,14 @@
   }
   function drawWedding() {
     Art.drawWeddingBG(ctx, VW, VH);
-    Art.drawPrincess(ctx, VW / 2 + 34, GROUND_Y - 90, { facing: -1, t, wedding: true });
-    Art.drawKnight(ctx, VW / 2 - 34, GROUND_Y - 90, { facing: 1, t, wedding: true });
+    const groundY = VH - 150 - 2; // matches the carpet/ground line inside drawWeddingBG
+    ctx.save();
+    ctx.globalAlpha = 0.25; ctx.fillStyle = "#000";
+    ctx.beginPath(); ctx.ellipse(VW / 2 + 34, groundY + 5, 20, 6, 0, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(VW / 2 - 34, groundY + 5, 20, 6, 0, 0, 7); ctx.fill();
+    ctx.restore();
+    Art.drawPrincess(ctx, VW / 2 + 34, groundY, { facing: -1, t, wedding: true });
+    Art.drawKnight(ctx, VW / 2 - 34, groundY, { facing: 1, t, wedding: true });
     drawParticles();
     ctx.fillStyle = "#fff";
     ctx.font = "bold 22px sans-serif";
